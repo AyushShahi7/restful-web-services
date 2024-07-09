@@ -1,7 +1,11 @@
 package com.ayush.rest.webservices.restful_web_services.user;
 
+import jakarta.validation.Valid;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
+import java.net.URI;
 import java.util.List;
 
 @RestController
@@ -20,11 +24,22 @@ public class UserResource {
 
     @GetMapping(path = "/users/{id}")
     public User retrieveUser(@PathVariable int id) {
-        return service.findOne(id);
+        User user = service.findOne(id);
+        if (user == null) {
+            throw new UserNotFoundException("id: " + id);
+        }
+        return user;
     }
 
     @PostMapping(path = "/users")
-    public void saveUser(@RequestBody User user){
-        service.save(user);
+    public ResponseEntity<Object> createUser(@Valid @RequestBody User user) {
+        User savedUser = service.save(user);
+        URI location = ServletUriComponentsBuilder.fromCurrentRequest().path("/{id}").buildAndExpand(savedUser.getId()).toUri();
+        return ResponseEntity.created(location).build();
+    }
+
+    @DeleteMapping(path = "/users/{id}")
+    public void deleteUser(@PathVariable int id){
+        service.deleteById(id);
     }
 }
